@@ -1,0 +1,49 @@
+{
+  "name": "tree-sitter-fixed-form-fortran",
+  "version": "0.0.1",
+  "description": "Fixed form Fortran grammar for tree-sitter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stadelmanma/tree-sitter-fixed-form-fortran"
+  },
+  "main": "bindings/node",
+  "keywords": [
+    "parser",
+    "fortran",
+    "tree-sitter"
+  ],
+  "author": "Matt Stadelman <stadelmanma@gmail.com> (https://github.com/stadelmanma)",
+  "bugs": {
+    "url": "https://github.com/stadelmanma/tree-sitter-fixed-form-fortran/issues"
+  },
+  "homepage": "https://github.com/stadelmanma/tree-sitter-fixed-form-fortran#readme",
+  "license": "MIT",
+  "dependencies": {
+    "nan": "^2.17.0"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.20.0",
+    "tree-sitter-fortran": "git://github.com/stadelmanma/tree-sitter-fortran.git"
+  },
+  "scripts": {
+    "build": "tree-sitter generate && node-gyp build",
+    "parse": "tree-sitter parse",
+    "test": "tree-sitter test && tree-sitter parse examples/* --quiet --time"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.fortran",
+      "file-types": [
+        "F90",
+        "f90",
+        "f",
+        "f77",
+        "f95"
+      ],
+      "highlights": [
+        "queries/highlights.scm"
+      ],
+      "injection-regex": "fixed-form-fortran"
+    }
+  ]
+}

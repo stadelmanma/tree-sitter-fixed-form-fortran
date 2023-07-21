@@ -10348,20 +10348,20 @@
       ]
     },
     "comment": {
-      "type": "TOKEN",
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "STRING",
-            "value": "!"
-          },
-          {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "_comment_character"
+        },
+        {
+          "type": "TOKEN",
+          "content": {
             "type": "PATTERN",
             "value": ".*"
           }
-        ]
-      }
+        }
+      ]
     },
     "_line_continuation": {
       "type": "STRING",
@@ -10476,6 +10476,10 @@
     ],
     [
       "type_statement"
+    ],
+    [
+      "_comment_character",
+      "identifier"
     ]
   ],
   "precedences": [],
@@ -10503,6 +10507,10 @@
     {
       "type": "SYMBOL",
       "name": "_end_of_statement"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_comment_character"
     }
   ],
   "inline": [

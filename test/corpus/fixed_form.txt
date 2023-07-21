@@ -1,0 +1,19 @@
+====================
+Comments
+====================
+
+c     Comment
+c     Second comment
+
+C     Comment with caps
+
+*     Comment with asterix
+
+---
+
+(translation_unit
+    (comment)
+    (comment)
+    (comment)
+    (comment)
+)

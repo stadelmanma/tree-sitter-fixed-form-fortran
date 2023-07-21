@@ -17,3 +17,29 @@ C     Comment with caps
     (comment)
     (comment)
 )
+
+====================
+Line continuations
+====================
+
+      PROGRAM
+     +foo
+      IF (SOMETHING
+     +    .AND. SOMETHING_ELSE
+     +    .OR. ANOTHER_THING) THEN
+        BAR = 2
+      END IF
+      END
+---
+
+(translation_unit
+  (program
+    (program_statement (name))
+    (if_statement
+      (parenthesized_expression
+        (logical_expression
+          (logical_expression (identifier) (identifier))
+          (identifier)))
+      (assignment_statement (identifier) (number_literal))
+      (end_if_statement))
+    (end_program_statement)))

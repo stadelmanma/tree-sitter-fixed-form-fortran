@@ -1,8 +1,8 @@
 #include "tree_sitter/parser.h"
 #include <ctype.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <wctype.h>
-#include <stdio.h>
 
 enum TokenType {
     LINE_CONTINUATION,
@@ -198,37 +198,6 @@ bool scan_end_of_statement(Scanner *scanner, TSLexer *lexer) {
     return true;
 }
 
-bool scan_start_line_continuation(Scanner *scanner, TSLexer *lexer) {
-    // Now see if we should start a line continuation
-    scanner->in_line_continuation = (lexer->lookahead == '&');
-    if (!scanner->in_line_continuation) {
-        return false;
-    }
-    // Consume the '&'
-    advance(lexer);
-    lexer->result_symbol = LINE_CONTINUATION;
-    return true;
-}
-
-bool scan_end_line_continuation(Scanner *scanner, TSLexer *lexer) {
-    if (!scanner->in_line_continuation) {
-        return false;
-    }
-    // Everything except comments ends a line continuation
-    if (lexer->lookahead == '!') {
-        return false;
-    }
-
-    scanner->in_line_continuation = false;
-
-    // Consume any leading line continuation markers
-    if (lexer->lookahead == '&') {
-        advance(lexer);
-    }
-    lexer->result_symbol = LINE_CONTINUATION;
-    return true;
-}
-
 bool scan_string_literal(TSLexer *lexer) {
     const char opening_quote = lexer->lookahead;
 
@@ -318,7 +287,11 @@ bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         skip(lexer);
     }
 
-    if (scan_end_line_continuation(scanner, lexer)) {
+    // Right, now we need to check for fixed-form continuation markers.
+    // These appear on the _next_ line in column 6 (1-indexed)
+    if (get_column(lexer) == 5 && !iswblank(lexer->lookahead)) {
+        skip(lexer);
+        lexer->result_symbol = LINE_CONTINUATION;
         return true;
     }
 
@@ -341,10 +314,6 @@ bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         if (scan_boz(lexer)) {
             return true;
         }
-    }
-
-    if (scan_start_line_continuation(scanner, lexer)) {
-        return true;
     }
 
     return false;

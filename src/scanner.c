@@ -225,35 +225,17 @@ bool scan_string_literal(TSLexer *lexer) {
     advance(lexer);
     lexer->result_symbol = STRING_LITERAL;
 
-    while (lexer->lookahead != '\n' && !lexer->eof(lexer)) {
-        // Handle line continuations: strictly speaking, we MUST have
-        // both trailing '&' on first line AND leading '&' on second
-        // line, though most compilers do accept string literals
-        // missing the second '&'. In practice, everyone does seem to
-        // include it.
-
-        // We need to handle this here because sometimes '&' is part
-        // of the literal and not a continuation marker, and otherwise
-        // the parser gets confused, especially if there's no
-        // whitespace before the '&' in the string
-
-        // The literal token will end up containing the line
-        // continuation as well as any blank or comment lines inside
-        // the quotes (yes, you can have comments _inside_ string
-        // literals if they contain a line continuation)
-        if (lexer->lookahead == '&') {
-            advance(lexer);
-            // Consume blanks up to the end of the line or non-blank
-            while (iswblank(lexer->lookahead)) {
+    while (!lexer->eof(lexer)) {
+        // If we hit the end of the line, consume all whitespace,
+        // including new lines, then check if there's a continuation
+        // character on the next line
+        if (lexer->lookahead == '\n') {
+            while (iswspace(lexer->lookahead)) {
                 advance(lexer);
             }
-            // If we hit the end of the line, consume all whitespace,
-            // including new lines
-            if (lexer->lookahead == '\n') {
-                while (iswspace(lexer->lookahead)) {
-                    advance(lexer);
-                }
-            }
+            // We just eat any continuation here
+            scan_continuation(lexer);
+            lexer->result_symbol = STRING_LITERAL;
         }
 
         // If we hit the same kind of quote that opened this literal,
@@ -270,8 +252,8 @@ bool scan_string_literal(TSLexer *lexer) {
         advance(lexer);
     }
 
-    // We hit the end of the line without an '&', so this is an
-    // unclosed string literal (an error)
+    // We hit the end of the line without a line continuation, so this
+    // is an unclosed string literal (an error)
     return false;
 }
 

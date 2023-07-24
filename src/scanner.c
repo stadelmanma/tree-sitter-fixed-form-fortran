@@ -78,6 +78,9 @@ bool scan_number(TSLexer *lexer) {
     bool digits = scan_int(lexer);
     if (lexer->lookahead == '.') {
         advance(lexer);
+        while (iswblank(lexer->lookahead)) {
+            skip(lexer);
+        }
         // exclude decimal if followed by any letter other than d/D and e/E
         // if no leading digits are present and a non-digit follows
         // the decimal it's a nonmatch.

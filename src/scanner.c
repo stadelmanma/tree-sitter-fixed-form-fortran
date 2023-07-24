@@ -153,6 +153,17 @@ bool scan_boz(TSLexer *lexer) {
     return false;
 }
 
+
+bool scan_continuation(Scanner *scanner, TSLexer *lexer) {
+    // These appear on the _next_ line in column 6 (1-indexed)
+    if (get_column(lexer) == 5 && !iswblank(lexer->lookahead)) {
+        skip(lexer);
+        lexer->result_symbol = LINE_CONTINUATION;
+        return true;
+    }
+    return false;
+}
+
 bool scan_end_of_statement(Scanner *scanner, TSLexer *lexer) {
     // Things that end statements in Fortran:
     //
@@ -171,11 +182,6 @@ bool scan_end_of_statement(Scanner *scanner, TSLexer *lexer) {
         return true;
     }
 
-    // If we're in a line continuation, then don't end the statement
-    if (scanner->in_line_continuation) {
-        return false;
-    }
-
     // Consume end of line characters, we allow '\n', '\r\n' and
     // '\r' to cover unix, MSDOS and old style Macintosh.
     // Handle comments here too, but don't consume them
@@ -192,6 +198,19 @@ bool scan_end_of_statement(Scanner *scanner, TSLexer *lexer) {
             // end-of-statement
             return false;
         }
+    }
+
+    // Keep consuming whitespace until column 5
+    // We're now either in a line continuation or between
+    // statements, so we should eat all whitespace including
+    // newlines, until we come to something more interesting
+    while (iswspace(lexer->lookahead)) {
+        skip(lexer);
+    }
+
+    // Right, now we need to check for fixed-form continuation markers.
+    if (scan_continuation(scanner, lexer)) {
+        return true;
     }
 
     lexer->result_symbol = END_OF_STATEMENT;
@@ -280,22 +299,15 @@ bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         }
     }
 
-    // We're now either in a line continuation or between
-    // statements, so we should eat all whitespace including
-    // newlines, until we come to something more interesting
     while (iswspace(lexer->lookahead)) {
         skip(lexer);
     }
 
-    // Right, now we need to check for fixed-form continuation markers.
-    // These appear on the _next_ line in column 6 (1-indexed)
-    if (get_column(lexer) == 5 && !iswblank(lexer->lookahead)) {
-        skip(lexer);
-        lexer->result_symbol = LINE_CONTINUATION;
+    if (scan_comment(scanner, lexer)) {
         return true;
     }
 
-    if (valid_symbols[COMMENT_CHARACTER] && scan_comment(scanner, lexer)) {
+    if (scan_continuation(scanner, lexer)) {
         return true;
     }
 

@@ -29,6 +29,8 @@ Line continuations
      +    .OR. ANOTHER_THING) THEN
         BAR = 2
       END IF
+      AAPQ = MAX
+     $      / MIN
       END
 ---
 
@@ -42,6 +44,9 @@ Line continuations
           (identifier)))
       (assignment_statement (identifier) (number_literal))
       (end_if_statement))
+    (assignment_statement
+      (identifier)
+      (math_expression (identifier) (identifier)))
     (end_program_statement)))
 
 ====================

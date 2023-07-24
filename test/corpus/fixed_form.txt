@@ -43,3 +43,30 @@ Line continuations
       (assignment_statement (identifier) (number_literal))
       (end_if_statement))
     (end_program_statement)))
+
+====================
+Array arguments
+====================
+
+      SUBROUTINE ZTRTTF( A, LDA, ARF )
+      INTEGER            LDA
+*     .. Array Arguments ..
+      COMPLEX*16         A( 0: LDA-1, 0: * ), ARF( 0: * )
+      END SUBROUTINE
+
+---
+
+(translation_unit
+  (subroutine
+    (subroutine_statement (name) (parameters (identifier) (identifier) (identifier)))
+    (variable_declaration (intrinsic_type) (identifier))
+    (comment)
+    (variable_declaration (intrinsic_type) (size)
+      (call_expression (identifier)
+        (argument_list
+          (extent_specifier (number_literal)
+            (math_expression (identifier) (number_literal)))
+          (extent_specifier (number_literal) (assumed_size))))
+      (call_expression (identifier) (argument_list
+          (extent_specifier (number_literal) (assumed_size)))))
+    (end_subroutine_statement)))

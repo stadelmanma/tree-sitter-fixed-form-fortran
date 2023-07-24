@@ -339,7 +339,7 @@ endif
 
 quiet_cmd_regen_makefile = ACTION Regenerating $@
 cmd_regen_makefile = cd $(srcdir); /usr/lib64/node_modules/npm20/node_modules/node-gyp/gyp/gyp_main.py -fmake --ignore-environment "-Dlibrary=shared_library" "-Dvisibility=default" "-Dnode_root_dir=/usr/include/node20" "-Dnode_gyp_dir=/usr/lib64/node_modules/npm20/node_modules/node-gyp" "-Dnode_lib_file=/usr/include/node20/<(target_arch)/node.lib" "-Dmodule_root_dir=/home/peter/Tools/tree-sitter/tree-sitter-fixed-form-fortran" "-Dnode_engine=v8" "--depth=." "-Goutput_dir=." "--generator-output=build" -I/home/peter/Tools/tree-sitter/tree-sitter-fixed-form-fortran/build/config.gypi -I/usr/lib64/node_modules/npm20/node_modules/node-gyp/addon-rpm.gypi -I/usr/include/node20/common.gypi "--toplevel-dir=." binding.gyp
-Makefile: $(srcdir)/build/config.gypi $(srcdir)/../../../../../usr/include/node20/common.gypi $(srcdir)/binding.gyp $(srcdir)/../../../../../usr/lib64/node_modules/npm20/node_modules/node-gyp/addon-rpm.gypi
+Makefile: $(srcdir)/binding.gyp $(srcdir)/../../../../../usr/include/node20/common.gypi $(srcdir)/../../../../../usr/lib64/node_modules/npm20/node_modules/node-gyp/addon-rpm.gypi $(srcdir)/build/config.gypi
 	$(call do_cmd,regen_makefile)
 
 # "all" is a concatenation of the "all" targets from all the included

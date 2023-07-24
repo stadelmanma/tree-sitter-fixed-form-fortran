@@ -14,10 +14,6 @@ enum TokenType {
     COMMENT_CHARACTER
 };
 
-typedef struct {
-    bool in_line_continuation;
-} Scanner;
-
 //  consume current character into current token and advance
 static inline void advance(TSLexer *lexer) { lexer->advance(lexer, false); }
 
@@ -154,7 +150,7 @@ bool scan_boz(TSLexer *lexer) {
 }
 
 
-bool scan_continuation(Scanner *scanner, TSLexer *lexer) {
+bool scan_continuation(TSLexer *lexer) {
     // These appear on the _next_ line in column 6 (1-indexed)
     if (get_column(lexer) == 5 && !iswblank(lexer->lookahead)) {
         skip(lexer);
@@ -164,7 +160,7 @@ bool scan_continuation(Scanner *scanner, TSLexer *lexer) {
     return false;
 }
 
-bool scan_end_of_statement(Scanner *scanner, TSLexer *lexer) {
+bool scan_end_of_statement(TSLexer *lexer) {
     // Things that end statements in Fortran:
     //
     // - semicolons
@@ -209,7 +205,7 @@ bool scan_end_of_statement(Scanner *scanner, TSLexer *lexer) {
     }
 
     // Right, now we need to check for fixed-form continuation markers.
-    if (scan_continuation(scanner, lexer)) {
+    if (scan_continuation(lexer)) {
         return true;
     }
 
@@ -277,7 +273,7 @@ bool scan_string_literal(TSLexer *lexer) {
     return false;
 }
 
-bool scan_comment(Scanner *scanner, TSLexer *lexer) {
+bool scan_comment(TSLexer *lexer) {
     if (!is_comment_character(lexer)) {
         return false;
     }
@@ -286,7 +282,7 @@ bool scan_comment(Scanner *scanner, TSLexer *lexer) {
     return true;
 }
 
-bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
+bool scan(TSLexer *lexer, const bool *valid_symbols) {
     // Consume any leading whitespace except newlines
     while (iswblank(lexer->lookahead)) {
         skip(lexer);
@@ -294,7 +290,7 @@ bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
     // Close the current statement if we can
     if (valid_symbols[END_OF_STATEMENT]) {
-        if (scan_end_of_statement(scanner, lexer)) {
+        if (scan_end_of_statement(lexer)) {
             return true;
         }
     }
@@ -303,11 +299,11 @@ bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         skip(lexer);
     }
 
-    if (scan_comment(scanner, lexer)) {
+    if (scan_comment(lexer)) {
         return true;
     }
 
-    if (scan_continuation(scanner, lexer)) {
+    if (scan_continuation(lexer)) {
         return true;
     }
 
@@ -332,32 +328,21 @@ bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 }
 
 void *tree_sitter_fixed_form_fortran_external_scanner_create() {
-    return calloc(1, sizeof(bool));
+    return NULL;
 }
 
 bool tree_sitter_fixed_form_fortran_external_scanner_scan(void *payload, TSLexer *lexer,
                                                const bool *valid_symbols) {
-    Scanner *scanner = (Scanner *)payload;
-    return scan(scanner, lexer, valid_symbols);
+    return scan(lexer, valid_symbols);
 }
 
 unsigned tree_sitter_fixed_form_fortran_external_scanner_serialize(void *payload,
                                                         char *buffer) {
-    Scanner *scanner = (Scanner *)payload;
-    buffer[0] = (char)scanner->in_line_continuation;
-    return 1;
+    return 0;
 }
 
 void tree_sitter_fixed_form_fortran_external_scanner_deserialize(void *payload,
                                                       const char *buffer,
-                                                      unsigned length) {
-    Scanner *scanner = (Scanner *)payload;
-    if (length > 0) {
-        scanner->in_line_continuation = buffer[0];
-    }
-}
+                                                      unsigned length) {}
 
-void tree_sitter_fixed_form_fortran_external_scanner_destroy(void *payload) {
-    Scanner *scanner = (Scanner *)payload;
-    free(scanner);
-}
+void tree_sitter_fixed_form_fortran_external_scanner_destroy(void *payload) {}

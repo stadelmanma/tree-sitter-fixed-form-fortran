@@ -47,6 +47,7 @@ CXXFLAGS.target ?= $(CPPFLAGS) $(CXXFLAGS)
 LINK.target ?= $(LINK)
 LDFLAGS.target ?= $(LDFLAGS)
 AR.target ?= $(AR)
+PLI.target ?= pli
 
 # C++ apps need to be linked with g++.
 LINK ?= $(CXX.target)
@@ -60,6 +61,7 @@ CXXFLAGS.host ?= $(CPPFLAGS_host) $(CXXFLAGS_host)
 LINK.host ?= $(CXX.host)
 LDFLAGS.host ?= $(LDFLAGS_host)
 AR.host ?= ar
+PLI.host ?= pli
 
 # Define a dir function that can handle spaces.
 # http://www.gnu.org/software/make/manual/make.html#Syntax-of-Functions
@@ -133,6 +135,9 @@ quiet_cmd_copy = COPY $@
 # send stderr to /dev/null to ignore messages when linking directories.
 cmd_copy = ln -f "$<" "$@" 2>/dev/null || (rm -rf "$@" && cp -af "$<" "$@")
 
+quiet_cmd_symlink = SYMLINK $@
+cmd_symlink = ln -sf "$<" "$@"
+
 quiet_cmd_alink = AR($(TOOLSET)) $@
 cmd_alink = rm -f $@ && $(AR.$(TOOLSET)) crs $@ $(filter %.o,$^)
 
@@ -144,6 +149,31 @@ cmd_alink_thin = rm -f $@ && $(AR.$(TOOLSET)) crsT $@ $(filter %.o,$^)
 # input list during linking.
 quiet_cmd_link = LINK($(TOOLSET)) $@
 cmd_link = $(LINK.$(TOOLSET)) -o $@ $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) -Wl,--start-group $(LD_INPUTS) $(LIBS) -Wl,--end-group
+
+# Note: this does not handle spaces in paths
+define xargs
+  $(1) $(word 1,$(2))
+$(if $(word 2,$(2)),$(call xargs,$(1),$(wordlist 2,$(words $(2)),$(2))))
+endef
+
+define write-to-file
+  @: >$(1)
+$(call xargs,@printf "%s\n" >>$(1),$(2))
+endef
+
+OBJ_FILE_LIST := ar-file-list
+
+define create_archive
+        rm -f $(1) $(1).$(OBJ_FILE_LIST); mkdir -p `dirname $(1)`
+        $(call write-to-file,$(1).$(OBJ_FILE_LIST),$(filter %.o,$(2)))
+        $(AR.$(TOOLSET)) crs $(1) @$(1).$(OBJ_FILE_LIST)
+endef
+
+define create_thin_archive
+        rm -f $(1) $(OBJ_FILE_LIST); mkdir -p `dirname $(1)`
+        $(call write-to-file,$(1).$(OBJ_FILE_LIST),$(filter %.o,$(2)))
+        $(AR.$(TOOLSET)) crsT $(1) @$(1).$(OBJ_FILE_LIST)
+endef
 
 # We support two kinds of shared objects (.so):
 # 1) shared_library, which is just bundling together many dependent libraries
@@ -308,8 +338,8 @@ ifeq ($(strip $(foreach prefix,$(NO_LOAD),\
 endif
 
 quiet_cmd_regen_makefile = ACTION Regenerating $@
-cmd_regen_makefile = cd $(srcdir); /home/mstadelman/.nvm/versions/node/v18.12.1/lib/node_modules/npm/node_modules/node-gyp/gyp/gyp_main.py -fmake --ignore-environment "-Dlibrary=shared_library" "-Dvisibility=default" "-Dnode_root_dir=/home/mstadelman/.cache/node-gyp/18.12.1" "-Dnode_gyp_dir=/home/mstadelman/.nvm/versions/node/v18.12.1/lib/node_modules/npm/node_modules/node-gyp" "-Dnode_lib_file=/home/mstadelman/.cache/node-gyp/18.12.1/<(target_arch)/node.lib" "-Dmodule_root_dir=/home/mstadelman/Development/tree-sitter-fixed-form-fortran" "-Dnode_engine=v8" "--depth=." "-Goutput_dir=." "--generator-output=build" -I/home/mstadelman/Development/tree-sitter-fixed-form-fortran/build/config.gypi -I/home/mstadelman/.nvm/versions/node/v18.12.1/lib/node_modules/npm/node_modules/node-gyp/addon.gypi -I/home/mstadelman/.cache/node-gyp/18.12.1/include/node/common.gypi "--toplevel-dir=." binding.gyp
-Makefile: $(srcdir)/../../.cache/node-gyp/18.12.1/include/node/common.gypi $(srcdir)/build/config.gypi $(srcdir)/binding.gyp $(srcdir)/../../.nvm/versions/node/v18.12.1/lib/node_modules/npm/node_modules/node-gyp/addon.gypi
+cmd_regen_makefile = cd $(srcdir); /usr/lib64/node_modules/npm20/node_modules/node-gyp/gyp/gyp_main.py -fmake --ignore-environment "-Dlibrary=shared_library" "-Dvisibility=default" "-Dnode_root_dir=/usr/include/node20" "-Dnode_gyp_dir=/usr/lib64/node_modules/npm20/node_modules/node-gyp" "-Dnode_lib_file=/usr/include/node20/<(target_arch)/node.lib" "-Dmodule_root_dir=/home/peter/Tools/tree-sitter/tree-sitter-fixed-form-fortran" "-Dnode_engine=v8" "--depth=." "-Goutput_dir=." "--generator-output=build" -I/home/peter/Tools/tree-sitter/tree-sitter-fixed-form-fortran/build/config.gypi -I/usr/lib64/node_modules/npm20/node_modules/node-gyp/addon-rpm.gypi -I/usr/include/node20/common.gypi "--toplevel-dir=." binding.gyp
+Makefile: $(srcdir)/binding.gyp $(srcdir)/../../../../../usr/include/node20/common.gypi $(srcdir)/../../../../../usr/lib64/node_modules/npm20/node_modules/node-gyp/addon-rpm.gypi $(srcdir)/build/config.gypi
 	$(call do_cmd,regen_makefile)
 
 # "all" is a concatenation of the "all" targets from all the included

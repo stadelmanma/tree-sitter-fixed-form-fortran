@@ -1,0 +1,92 @@
+====================
+Comments
+====================
+
+c     Comment
+c     Second comment
+
+C     Comment with caps
+
+*     Comment with asterix
+
+---
+
+(translation_unit
+    (comment)
+    (comment)
+    (comment)
+    (comment)
+)
+
+====================
+Line continuations
+====================
+
+      PROGRAM
+     +foo
+      IF (SOMETHING
+     +    .AND. SOMETHING_ELSE
+     +    .OR. ANOTHER_THING) THEN
+        BAR = 2
+      END IF
+      AAPQ = MAX
+     $      / MIN
+      END
+---
+
+(translation_unit
+  (program
+    (program_statement (name))
+    (if_statement
+      (parenthesized_expression
+        (logical_expression
+          (logical_expression (identifier) (identifier))
+          (identifier)))
+      (assignment_statement (identifier) (number_literal))
+      (end_if_statement))
+    (assignment_statement
+      (identifier)
+      (math_expression (identifier) (identifier)))
+    (end_program_statement)))
+
+====================
+Array arguments
+====================
+
+      SUBROUTINE ZTRTTF( A, LDA, ARF )
+      INTEGER            LDA
+*     .. Array Arguments ..
+      COMPLEX*16         A( 0: LDA-1, 0: * ), ARF( 0: * )
+      END SUBROUTINE
+
+---
+
+(translation_unit
+  (subroutine
+    (subroutine_statement (name) (parameters (identifier) (identifier) (identifier)))
+    (variable_declaration (intrinsic_type) (identifier))
+    (comment)
+    (variable_declaration (intrinsic_type) (size)
+      (call_expression (identifier)
+        (argument_list
+          (extent_specifier (number_literal)
+            (math_expression (identifier) (number_literal)))
+          (extent_specifier (number_literal) (assumed_size))))
+      (call_expression (identifier) (argument_list
+          (extent_specifier (number_literal) (assumed_size)))))
+    (end_subroutine_statement)))
+
+========================================
+Line continuation string literal
+========================================
+
+      print*,'start
+     +        stop'
+      END
+
+---
+(translation_unit
+  (program
+    (print_statement (format_identifier)
+      (output_item_list (string_literal)))
+    (end_program_statement)))
